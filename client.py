@@ -8,9 +8,9 @@ import os
 
 class Client(object):
 
-	def __init__(self):
+	def __init__(self, port):
 		self.__host = ''
-		self.__port = 50001
+		self.__port = port
 
 		self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -110,7 +110,12 @@ class Client(object):
 		print 'done.'
 
 def main():
-	client = Client()
+	port = 50001
+
+	if len(sys.argv) > 1:
+		port = int(sys.argv[1])
+
+	client = Client(port)
 	client.start()
 	client.stop()
 
