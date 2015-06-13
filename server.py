@@ -58,14 +58,15 @@ class Server(object):
 		conn.close()
 
 	def start(self):
-		client_list = [['', 50001]]
+		client_list = [['', 50001], ['', 50002], ['', 50003]]
+
+		print 'Please enter command: '
+		command = raw_input()
 
 		for client in client_list:
 			try:
 				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				s.connect((client[0], client[1]))
-				print 'Please enter command: '
-				command = raw_input()
 				if command == "process":
 					s.sendall(command)
 					self.__process()
