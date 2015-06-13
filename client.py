@@ -21,7 +21,8 @@ class Client(object):
 			'stop': self.__stop,
 			'process': self.__process,
 			'print': self.__print,
-			'restart': self.__restart
+			'restart': self.__restart,
+			'exec': self.__exec
 		}
 
 		self.__keepRunning = True
@@ -38,9 +39,9 @@ class Client(object):
 
 			arguments = data.split()
 
-			print 'Recieved command: ' + data + '', arguments[1:]
+			print 'Recieved command: ' +  arguments[0], arguments[1:]
 
-			if data in self.__commands:
+			if arguments[0] in self.__commands:
 				self.__commands[arguments[0]](arguments[1:])
 
 	def __stop(self, arguments = []):
@@ -55,6 +56,10 @@ class Client(object):
 
 	def __print(self, arguments = []):
 		print 'hello!'
+
+	def __exec(self, arguments = []):
+		op = os.popen(" ".join(arguments))
+		print op.read()
 
 	def stop(self):
 		print 'closing server...'
