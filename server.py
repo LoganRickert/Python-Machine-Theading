@@ -3,6 +3,7 @@ import socket
 import sys
 import json
 from thread import *
+from threading import Thread
 import time
 
 class Server(object):
@@ -23,6 +24,12 @@ class Server(object):
 
 		self.__time = 0
 		self.__start = False
+
+		self.__threads = []
+
+		self.__process_start = False
+
+		self.__hasFinishedProcessing = False
 
 	def __set_port(self):
 		with open('port', 'r') as f:
@@ -45,14 +52,15 @@ class Server(object):
 				# print 'recv the data ', addQueue
 				self.__updatedQueue.append(addQueue)
 		if self.__count < len(self.__queue):
-			sendList = [self.__hit, self.__queue[self.__count:self.__count+1000]]
-			self.__count += 1000
-			if self.__count % 50000 == 0:
+			sendList = [self.__hit, self.__queue[self.__count:self.__count+10]]
+			self.__count += 10
+			if self.__count % 25000 == 0:
 				print self.__count
 			self.__hit += 1
 			conn.sendall(json.dumps(sendList))
 			# print 'Sent ', sendList
 		else:
+			self.__hasFinishedProcessing = True
 			conn.sendall(json.dumps([]))
 			# print 'Sent []'
 		conn.close()
@@ -63,42 +71,67 @@ class Server(object):
 		print 'Please enter command: '
 		command = raw_input()
 
+		threads = []
+
 		for client in client_list:
 			try:
 				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				s.connect((client[0], client[1]))
 				if command == "process":
 					s.sendall(command)
-					self.__process()
+					t = Thread(target=self.__process)
+					t.start()
+					threads.append(t)
 				else:
 					s.sendall(command)
 			except:
 				print 'Error while connecting'
 				print sys.exc_info()
 
+		for t in threads:
+			t.join()
+
 	def __process(self):
-		self.__queue = range(1, 10000)
-		self.__count = 0
-		self.__hit = 0
+		if not self.__process_start:
+			self.__process_start = True
+			self.__queue = range(1, 501)
+			self.__count = 0
+			self.__hit = 0
 
-		self.__updatedQueue = []
+			self.__updatedQueue = []
 
-		while self.__count < len(self.__queue):
+			self.__threads = []
+
+			while not self.__hasFinishedProcessing:
+				conn, addr = self.__socket.accept()
+				# print 'Connected by', addr
+
+				if not self.__start:
+					self.__time = time.time()
+					self.__start = True
+
+				t = Thread(target=self.__clientthread, args=(conn,))
+				t.start()
+				self.__threads.append(t)
+
+			# Need one final accept
 			conn, addr = self.__socket.accept()
-			# print 'Connected by', addr
-			if not self.__start:
-				self.__time = time.time()
-				self.__start = True
-			start_new_thread(self.__clientthread, (conn,))
+			t = Thread(target=self.__clientthread, args=(conn,))
+			t.start()
+			self.__threads.append(t)
 
-		self.sort()
+			for t in self.__threads:
+				t.join()
 
+			self.sort()
+		else:
+			print 'process is already started'
 
 	def sort(self):
-		time.sleep(2)
+		print 'Threads have joined'
 		self.__updatedQueue.sort(key=lambda x: x[0])
 		print self.__updatedQueue
-		print time.time() - self.__time - 2
+		print time.time() - self.__time
 
 	def stop(self):
 		self.__socket.close()

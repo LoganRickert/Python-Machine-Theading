@@ -22,7 +22,7 @@ class Client(object):
 			'process': self.__process,
 			'print': self.__print,
 			'restart': self.__restart,
-			'exec': self.__exec
+			'bash': self.__bash
 		}
 
 		self.__keepRunning = True
@@ -41,8 +41,11 @@ class Client(object):
 
 			print 'Recieved command: ' +  arguments[0], arguments[1:]
 
-			if arguments[0] in self.__commands:
-				self.__commands[arguments[0]](arguments[1:])
+			try:
+				if arguments[0] in self.__commands:
+					self.__commands[arguments[0]](arguments[1:])
+			except ex:
+				print ex 
 
 	def __stop(self, arguments = []):
 		self.__keepRunning = False
@@ -57,7 +60,7 @@ class Client(object):
 	def __print(self, arguments = []):
 		print 'hello!'
 
-	def __exec(self, arguments = []):
+	def __bash(self, arguments = []):
 		op = os.popen(" ".join(arguments))
 		print op.read()
 
@@ -73,13 +76,8 @@ class Client(object):
 	def __process(self, arguments = []):
 		what = [-1]
 
-		time.sleep(5)
-
 		host = ''
 		port = 50000
-
-		# with open('port', 'r') as f:
-		# 	port = int(f.read())
 
 		while what != []:
 			try:
